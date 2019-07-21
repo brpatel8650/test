@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Add/Edit/Delete/List - GRID</h1>
+        <br />
+        <div id="data-table">
+        </div>
+    </div>
+    <script type="text/javascript">
+        var columns = [
+            { "prop": "firstName", "display_name": "First Name", "data_type": "string" },
+            { "prop": "lastName", "display_name": "Last Name", "data_type": "string" },
+            { "prop": "contact", "display_name": "Phone Number", "data_type": "number" },
+            { "prop": "gridData", "display_name": "GRID", "data_type": "sub-grid", "gridName": "grid1" }
+        ];
+        var data = [
+            { "firstName": "Bhavesh", "lastName": "Patel", "contact": "8141788650" },
+            { "firstName": "Bhavesh", "lastName": "Patel", "contact": "8141788650" },
+            { "firstName": "Bhavesh", "lastName": "Patel", "contact": "8141788650" },
+            {
+                "firstName": "Bhavesh", "lastName": "Patel", "contact": "8141788650", "gridData": [
+                    { "firstName": "Bhavesh", "lastName": "Patel", "contact": "8141788650" },
+                    { "firstName": "Bhavesh", "lastName": "Patel", "contact": "8141788650" },
+                    { "firstName": "Bhavesh", "lastName": "Patel", "contact": "8141788650" },
+                    { "firstName": "Bhavesh", "lastName": "Patel", "contact": "8141788650" }
+                ]
+            }
+        ];
+        populateGrid(columns, data, "data-table", false)
+        function populateGrid(columns, data, tableId, isSubGrid) {
+            if (!data.length || data.length < 1) {
+                return;
+            }
+            let number_of_rows = data.length;
+            let number_of_cols = columns.length;
+            if(isSubGrid){
+                number_of_cols--;
+            }
+            
+            function createTable() {
+                let table_body = '<table border="1" class="table table-bordered ' + tableId + '">';
+                table_body += '<thead>';
+                for (let i = 0; i <= number_of_cols; i++) {
+                    table_body += '<th>' + (columns[i] ? columns[i]["display_name"] : '') + '</th>';
+                }
+                table_body += '<thead><tbody></tbody></table>';
+                $('#' + tableId).html(table_body);
+                listData();
+            }
+            createTable();
+            function listData() {
+                for (let row = 0; row < number_of_rows; row++) {
+                    let table_row = '<tr data-name="' + row + '">';
+                    let gridData = null;
+                    let hasGrid = false;
+                    let gridName = "";
+                    for (let rowCell = 0; rowCell <= number_of_cols; rowCell++) {
+
+                        if (rowCell == number_of_cols) {
+                            if (!isSubGrid) {
+                                table_row += '<td><button class="btn btn-info btn-xs btn-edit">Edit</button><button class="btn btn-danger btn-xs btn-delete">Delete</button>';
+                                if ((row + 1) == number_of_rows) {
+                                    table_row += '<button class="btn btn-info btn-xs btn-add">add</button>';
+                                }
+                                table_row += '</td>'
+                            }
+                        } else {
+                            if (columns[rowCell]["data_type"] == "sub-grid") {
+                                table_row += '<td><div id="' + columns[rowCell]["gridName"] + '"> </div></td>';
+                                gridName = columns[rowCell]["gridName"];
+                                hasGrid = true;
+                                gridData = data[row][columns[rowCell]["prop"]];
+                            } else {
+                                table_row += '<td>' + (data[row][columns[rowCell]["prop"]]) + '</td>';
+                            }
+                        }
+                    }
+                    table_row += '</tr>';
+                    addRow(table_row);
+                    if (hasGrid) {
+                        console.log(gridData);
+                        if (gridData) {
+                            populateGrid(columns, gridData, gridName, true);
+                        }
+                    }
+                }
+            }
+            function addRow(data) {
+                $("." + tableId + " tbody").append(data);
+            };
+
+
+            $("#" + tableId).on("click", ".btn-delete", function () {
+                let index = $(this).parents("tr").attr('data-name');
+                data.splice(index, 1);
+                $(this).parents("tr").remove();
+            });
+            $("#" + tableId).on("click", ".btn-add", function () {
+                let newRow = "<tr data-name='" + data.length + "'>";
+                for (let i = 0; i <= number_of_cols; i++) {
+                    if (i == number_of_cols) {
+                        newRow += "<td><button class='btn btn-info btn-xs btn-save'>Save</button><button class='btn btn-danger btn-xs btn-delete'>Delete</button><button class='btn btn-info btn-xs btn-add'>add</button></td>";
+                    } else {
+                        let inputName = "edit_" + columns[i]["prop"];
+                        newRow += '<td><input name="' + inputName + '" type="' + columns[i]["data_type"] + '"></td>';
+                    }
+                }
+                newRow += "</tr>"
+                $(this).parents("tr").find(".btn-add").remove();
+                $("." + tableId + " tbody").append(newRow);
+            });
+
+            $("#" + tableId).on("click", ".btn-edit", function () {
+                let index = $(this).parents("tr").attr('data-name');
+
+                for (let i = 0; i <= number_of_cols; i++) {
+                    if (i == number_of_cols) {
+                        $(this).parents("tr").find("td:eq(" + i + ")").prepend("<button class='btn btn-info btn-xs btn-update'>Update</button><button class='btn btn-warning btn-xs btn-cancel'>Cancel</button>");
+                    } else {
+                        let cell = "td:eq(" + i + ")";
+                        let inputName = "edit_" + columns[i]["prop"];
+                        $(this).parents("tr").find(cell).html('<input name="' + inputName + '" type="' + columns[i]["data_type"] + '" value="' + data[index][columns[i]["prop"]] + '">');
+                    }
+                }
+                $(this).hide();
+            });
+
+            $("#" + tableId).on("click", ".btn-cancel", function () {
+                let index = $(this).parents("tr").attr('data-name');
+                for (let i = 0; i < number_of_cols; i++) {
+                    let cell = "td:eq(" + i + ")";
+                    $(this).parents("tr").find(cell).text(data[i][columns[i]["prop"]] ? data[index][columns[i]["prop"]] : '');
+                }
+                $(this).parents("tr").find(".btn-edit").show();
+                $(this).parents("tr").find(".btn-update").remove();
+                $(this).parents("tr").find(".btn-cancel").remove();
+            });
+
+            $("#" + tableId).on("click", ".btn-update", function () {
+                let index = $(this).parents("tr").attr('data-name');
+                for (let i = 0; i < number_of_cols; i++) {
+                    let cell = "td:eq(" + i + ")";
+                    var value = $(this).parents("tr").find("input[name='edit_" + columns[i]["prop"] + "']").val();
+                    data[index][columns[i]["prop"]] = value;
+                    $(this).parents("tr").find(cell).text(value);
+                }
+                $(this).parents("tr").find(".btn-edit").show();
+                $(this).parents("tr").find(".btn-cancel").remove();
+                $(this).parents("tr").find(".btn-update").remove();
+            });
+
+            $("#" + tableId).on("click", ".btn-save", function () {
+                let newData = {};
+                for (let i = 0; i <= number_of_cols; i++) {
+                    if (i == number_of_cols) {
+                        $(this).parents("tr").find("td:eq(" + i + ")").prepend('<button class="btn btn-info btn-xs btn-edit">Edit</button>');
+                    } else {
+                        let value = $(this).parents("tr").find("input[name='edit_" + columns[i]["prop"] + "']").val();
+                        newData[columns[i]["prop"]] = value;
+                        let cell = "td:eq(" + i + ")";
+                        $(this).parents("tr").find(cell).text(value);
+                    }
+                }
+                data.push(newData);
+                $(this).parents("tr").find(".btn-save").remove();
+            });
+
+        }
+
+
+    </script>
+
+</body>
+
+</html>
