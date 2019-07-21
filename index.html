@@ -19,32 +19,44 @@
             { "prop": "firstName", "display_name": "First Name", "data_type": "string" },
             { "prop": "lastName", "display_name": "Last Name", "data_type": "string" },
             { "prop": "contact", "display_name": "Phone Number", "data_type": "number" },
-            { "prop": "gridData", "display_name": "GRID", "data_type": "sub-grid", "gridName": "grid1" }
+            {
+                "prop": "gridData", "display_name": "GRID", "data_type": "sub-grid", "gridName": "grid1", "gridColumns": [{ "prop": "firstName", "display_name": "First Name", "data_type": "string" },
+                { "prop": "lastName", "display_name": "Last Name1", "data_type": "string" },
+                { "prop": "contact", "display_name": "Phone Number1", "data_type": "number" }]
+            }
         ];
-        var data = [
+        var data1 = [
+            {
+                "firstName": "Bhavesh", "lastName": "Patel", "contact": "8141788650", "gridData": [
+                    { "firstName": "Bhaves1", "lastName": "Patel", "contact": "8141788650" },
+                    { "firstName": "Bhaves2", "lastName": "Patel", "contact": "8141788650" },
+                    { "firstName": "Bhaves3", "lastName": "Patel", "contact": "8141788650" },
+                    { "firstName": "Bhaves4", "lastName": "Patel", "contact": "8141788650" }
+                ]
+            },
             { "firstName": "Bhavesh", "lastName": "Patel", "contact": "8141788650" },
             { "firstName": "Bhavesh", "lastName": "Patel", "contact": "8141788650" },
             { "firstName": "Bhavesh", "lastName": "Patel", "contact": "8141788650" },
             {
                 "firstName": "Bhavesh", "lastName": "Patel", "contact": "8141788650", "gridData": [
-                    { "firstName": "Bhavesh", "lastName": "Patel", "contact": "8141788650" },
-                    { "firstName": "Bhavesh", "lastName": "Patel", "contact": "8141788650" },
-                    { "firstName": "Bhavesh", "lastName": "Patel", "contact": "8141788650" },
-                    { "firstName": "Bhavesh", "lastName": "Patel", "contact": "8141788650" }
+                    { "firstName": "Bhaves1", "lastName": "Patel", "contact": "8141788650" },
+                    { "firstName": "Bhaves2", "lastName": "Patel", "contact": "8141788650" },
+                    { "firstName": "Bhaves3", "lastName": "Patel", "contact": "8141788650" },
+                    { "firstName": "Bhaves4", "lastName": "Patel", "contact": "8141788650" }
                 ]
             }
         ];
-        populateGrid(columns, data, "data-table", false)
+        populateGrid(columns, data1, "data-table", false)
         function populateGrid(columns, data, tableId, isSubGrid) {
             if (!data.length || data.length < 1) {
                 return;
             }
             let number_of_rows = data.length;
             let number_of_cols = columns.length;
-            if(isSubGrid){
+            if (isSubGrid) {
                 number_of_cols--;
             }
-            
+
             function createTable() {
                 let table_body = '<table border="1" class="table table-bordered ' + tableId + '">';
                 table_body += '<thead>';
@@ -58,10 +70,13 @@
             createTable();
             function listData() {
                 for (let row = 0; row < number_of_rows; row++) {
+                    console.log("row", row);
+
                     let table_row = '<tr data-name="' + row + '">';
                     let gridData = null;
                     let hasGrid = false;
                     let gridName = "";
+                    let gridColumns = [];
                     for (let rowCell = 0; rowCell <= number_of_cols; rowCell++) {
 
                         if (rowCell == number_of_cols) {
@@ -71,13 +86,21 @@
                                     table_row += '<button class="btn btn-info btn-xs btn-add">add</button>';
                                 }
                                 table_row += '</td>'
+                            } else {
+                                table_row += '<td>' + (data[row][columns[rowCell]["prop"]]) + '</td>';
                             }
                         } else {
                             if (columns[rowCell]["data_type"] == "sub-grid") {
-                                table_row += '<td><div id="' + columns[rowCell]["gridName"] + '"> </div></td>';
-                                gridName = columns[rowCell]["gridName"];
-                                hasGrid = true;
-                                gridData = data[row][columns[rowCell]["prop"]];
+
+                                if (data[row][columns[rowCell]["prop"]] && data[row][columns[rowCell]["prop"]].length > 0) {
+                                    table_row += '<td rowspan="4"><div id="' + (columns[rowCell]["gridName"] + row + rowCell) + '"> </div></td>';
+                                    gridName = columns[rowCell]["gridName"] + row + rowCell;
+                                    hasGrid = true;
+                                    gridData = data[row][columns[rowCell]["prop"]];
+                                    gridColumns = columns[rowCell]["gridColumns"];
+                                } else {
+                                    // table_row += '<td>-</td>';
+                                }
                             } else {
                                 table_row += '<td>' + (data[row][columns[rowCell]["prop"]]) + '</td>';
                             }
@@ -88,13 +111,15 @@
                     if (hasGrid) {
                         console.log(gridData);
                         if (gridData) {
-                            populateGrid(columns, gridData, gridName, true);
+                            populateGrid(gridColumns, JSON.parse(JSON.stringify(gridData)), gridName, true);
                         }
                     }
                 }
             }
             function addRow(data) {
-                $("." + tableId + " tbody").append(data);
+                // console.log(data);
+
+                $("." + tableId + "> tbody").append(data);
             };
 
 
@@ -175,7 +200,11 @@
 
         }
 
-
+        function random() {
+            var min = 4;
+            var max = 5;
+            return Math.floor(Math.random() * (+max - +min)) + +min;
+        }
     </script>
 
 </body>
